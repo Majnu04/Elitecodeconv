@@ -1,7 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
 import { getHighlightLanguage } from "../utils/languageUtils";
 
-const API_KEY = process.env.API_KEY;
+// TypeScript: add type for import.meta.env
+interface ImportMeta {
+  env: {
+    VITE_GEMINI_API_KEY: string;
+  };
+}
+
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 if (!API_KEY) {
   throw new Error("API_KEY environment variable not set.");
@@ -52,7 +59,9 @@ export const convertCodeStream = async (
     });
 
     for await (const chunk of response) {
-      onStream(chunk.text);
+      if (chunk.text !== undefined) {
+        onStream(chunk.text);
+      }
     }
   } catch (error) {
     handleError(error, 'code conversion stream');
@@ -62,7 +71,7 @@ export const convertCodeStream = async (
 /**
  * Formats PHP code according to PSR-12 standards.
  */
-export const formatPhpCode = async (phpCode: string): Promise<string> => {
+export const formatPhpCode = async (phpCode: string): Promise<string | undefined> => {
     const prompt = `
     You are an expert PHP code formatter. Your task is to format the following PHP code according to the PSR-12 standard.
     
@@ -85,7 +94,7 @@ export const formatPhpCode = async (phpCode: string): Promise<string> => {
                 temperature: 0.0,
             }
         });
-        return response.text.trim();
+        return response.text?.trim();
     } catch (error) {
         handleError(error, 'code formatting');
     }
